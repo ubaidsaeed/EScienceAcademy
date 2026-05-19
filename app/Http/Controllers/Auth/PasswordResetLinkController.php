@@ -1,0 +1,56 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Password;
+use Illuminate\View\View;
+use Illuminate\Support\Facades\Mail as FacadesMail;
+use Illuminate\Support\Str;
+
+class PasswordResetLinkController extends Controller
+{
+    /**
+     * Display the password reset link request view.
+     */
+    public function create(): View
+    {
+        return view('auth.forgot-password');
+    }
+
+    /**
+         * Handle an incoming password reset link request.
+         *
+         * @throws \Illuminate\Validation\ValidationException
+         */
+        public function store(Request $request): RedirectResponse
+        {
+            $request->validate([
+                'email' => ['required', 'email'],
+            ]);
+    
+            // We will send the password reset link to this user. Once we have attempted
+            // to send the link, we will examine the response then see the message we
+            // need to show to the user. Finally, we'll send out a proper response.
+            // $user =DB::table('users')->where('email',$request->email)->first(); 
+       
+            //      $token = Str::random(64);
+            // FacadesMail::send('emails.passwordReset', ['user' => $user,'token'=>$token], function($message) use($user){
+            //     $message->to($user->email);
+            //     $message->subject('Password Reset Mail');
+    
+            // });
+            $status = Password::sendResetLink(
+                $request->only('email')
+            );
+            //   $status = 'Reset Password Mail are sended';
+    
+            return $status == Password::RESET_LINK_SENT
+                        ? back()->with('status', __($status))
+                        : back()->withInput($request->only('email'))
+                            ->withErrors(['email' => __($status)]);
+    }
+}
